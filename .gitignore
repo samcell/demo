@@ -1,0 +1,1 @@
+# Ignore OS files\nThumbs.db\n.DS_Store\n\n# Ignore Node modules if added later\nnode_modules/\n

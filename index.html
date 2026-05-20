@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo · Business Data Platform</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fe 0%, #e9eef5 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            max-width: 600px;
+            background: white;
+            border-radius: 2rem;
+            padding: 3rem 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+            text-align: center;
+            margin: 1rem;
+        }
+        h1 { font-size: 2.2rem; margin-bottom: 0.5rem; color: #1a2c3e; }
+        .subhead { color: #4a627a; margin-bottom: 2rem; font-size: 1.1rem; }
+        .btn-group {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0 1rem;
+        }
+        .btn {
+            padding: 0.9rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+        }
+        .btn-primary {
+            background: #1e3a8a;
+            color: white;
+            box-shadow: 0 4px 10px rgba(30,58,138,0.3);
+        }
+        .btn-secondary {
+            background: white;
+            color: #1e3a8a;
+            border: 1.5px solid #1e3a8a;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -8px rgba(0,0,0,0.2);
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #6c86a3;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>📊 DataFlow Analytics</h1>
+    <div class="subhead">Turn user behavior into revenue — live demo</div>
+    <div class="btn-group">
+        <button class="btn btn-primary" id="signupBtn">✍️ Sign Up</button>
+        <button class="btn btn-secondary" id="demoBtn">🎥 Request Demo</button>
+    </div>
+    <div class="footer">
+        👣 Your clicks are tracked for funnel analysis (Amplitude)
+    </div>
+</div>
+
+<!-- Amplitude SDK -->
+<script async src="https://cdn.amplitude.com/libs/amplitude-9.0.0-min.gz.js"></script>
+<script>
+    // Initialize Amplitude with your API key
+    amplitude.getInstance().init('608edaa6ac3635dcf6a81654528db207', null, {
+        serverZone: 'US',
+        ingestionMetadata: { sourceName: 'demo-landing-page' }
+    });
+    
+    // Track page view
+    amplitude.getInstance().logEvent('Page Viewed', { page: 'landing' });
+    
+    // CTA 1: Sign Up
+    document.getElementById('signupBtn')?.addEventListener('click', () => {
+        amplitude.getInstance().logEvent('CTA Clicked', { button_name: 'Sign Up' });
+        alert('✅ Event "Sign Up" tracked — check Amplitude');
+    });
+    
+    // CTA 2: Request Demo
+    document.getElementById('demoBtn')?.addEventListener('click', () => {
+        amplitude.getInstance().logEvent('CTA Clicked', { button_name: 'Request Demo' });
+        alert('✅ Event "Request Demo" tracked');
+    });
+</script>
+</body>
+</html>
