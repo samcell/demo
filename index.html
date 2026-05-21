@@ -78,6 +78,12 @@
 <!-- Amplitude Browser SDK (project script) -->
     <script src="assets/amplitude.js"></script>
 <script>
+    // Ensure `amplitude.getInstance` exists (protect against overwritten or missing SDK)
+    if (!window.amplitude) window.amplitude = {};
+    if (typeof window.amplitude.getInstance !== 'function') {
+        window.amplitude.getInstance = function(){ return { init:function(){}, logEvent:function(){ console.info('amp stub logEvent', ...arguments); }, identify:function(){ console.info('amp stub identify', ...arguments); } } };
+        window.amplitude.Identify = function(){ this.set = function(k,v){ this[k]=v; return this; } };
+    }
     // Guarded initialization and tracking: no-ops if Amplitude failed to load
     const _amp = window.amplitude && window.amplitude.getInstance ? window.amplitude.getInstance() : null;
     if (_amp) {
