@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo · Business Data Platform</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fe 0%, #e9eef5 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            max-width: 600px;
+            background: white;
+            border-radius: 2rem;
+            padding: 3rem 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+            text-align: center;
+            margin: 1rem;
+        }
+        h1 { font-size: 2.2rem; margin-bottom: 0.5rem; color: #1a2c3e; }
+        .subhead { color: #4a627a; margin-bottom: 2rem; font-size: 1.1rem; }
+        .btn-group {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0 1rem;
+        }
+        .btn {
+            padding: 0.9rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+        }
+        .btn-primary {
+            background: #1e3a8a;
+            color: white;
+            box-shadow: 0 4px 10px rgba(30,58,138,0.3);
+        }
+        .btn-secondary {
+            background: white;
+            color: #1e3a8a;
+            border: 1.5px solid #1e3a8a;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -8px rgba(0,0,0,0.2);
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #6c86a3;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>📊 DataFlow Analytics</h1>
+    <div class="subhead">Turn user behavior into revenue — live demo</div>
+    <div class="btn-group">
+        <button class="btn btn-primary" id="signupBtn">✍️ Sign Up</button>
+        <button class="btn btn-secondary" id="demoBtn">🎥 Request Demo</button>
+    </div>
+    <div class="footer">
+        👣 Your clicks are tracked for funnel analysis (Amplitude)
+    </div>
+</div>
+
+<!-- Amplitude Browser SDK -->
+<script async src="https://cdn.amplitude.com/libs/amplitude-8.21.0-min.gzip.js"></script>
+<script>
+    // Initialize Amplitude (runs once when SDK loads)
+    amplitude.getInstance().init('608edaa6ac3635dcf6a81654528db207', null, {
+        serverZone: 'US',
+        trackingOptions: {
+            country: true,
+            ip_address: true,
+            city: true,
+            region: true
+        }
+    });
+    
+    // Track page view
+    amplitude.getInstance().logEvent('Page Viewed', { 
+        page: 'landing',
+        referrer: document.referrer || 'direct'
+    });
+    
+    // CTA handlers
+    document.getElementById('signupBtn')?.addEventListener('click', () => {
+        localStorage.setItem('signup_start_time', Date.now());
+        amplitude.getInstance().logEvent('Signup Started', {
+            flow_name: 'landing-page-signup',
+            cta_location: 'landing-page-header',
+            signup_method: 'email',
+            is_returning_visitor: !!localStorage.getItem('first_visit_timestamp')
+        });
+        alert('✅ Event "Signup Started" tracked — sign up to complete tracking');
+    });
+    document.getElementById('demoBtn')?.addEventListener('click', () => {
+        amplitude.getInstance().logEvent('Demo Request Started', {
+            flow_name: 'landing-page-demo-request',
+            cta_location: 'landing-page-header',
+            request_type: 'guided-demo'
+        });
+        alert('✅ Event "Demo Request Started" tracked — submit demo request form to continue tracking');
+    });
+</script>
+</body>
+</html>
