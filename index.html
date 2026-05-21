@@ -75,28 +75,264 @@
     </div>
 </div>
 
-<!-- Amplitude SDK -->
-<script async src="https://cdn.amplitude.com/libs/amplitude-9.0.0-min.gz.js"></script>
+<!-- Amplitude Browser SDK -->
+<script async src="https://cdn.amplitude.com/libs/amplitude-8.21.0-min.gzip.js"></script>
 <script>
-    // Initialize Amplitude with your API key
+    // Initialize Amplitude (runs once when SDK loads)
     amplitude.getInstance().init('608edaa6ac3635dcf6a81654528db207', null, {
         serverZone: 'US',
-        ingestionMetadata: { sourceName: 'demo-landing-page' }
+        trackingOptions: {
+            country: true,
+            ip_address: true,
+            city: true,
+            region: true
+        }
     });
+    
+    // ============================================================
+    // Helper Functions for Event Tracking
+    // ============================================================
+    
+    // Track Signup Started - User begins the sign-up flow
+    function trackSignupStarted() {
+        amplitude.getInstance().logEvent('Signup Started', {
+            flow_name: 'landing-page-signup',
+            cta_location: 'landing-page-header',
+            signup_method: 'email', // or social auth method
+            is_returning_visitor: !localStorage.getItem('first_visit_timestamp')
+        });
+    }
+    
+    // Track Signup Completed - User successfully created an account
+    function trackSignupCompleted(signupMethod, accountType) {
+        const identify = new amplitude.Identify();
+        identify.set('Signup Method', signupMethod);
+        identify.set('Account Type', accountType);
+        identify.set('Onboarding Status', 'in_progress');
+        identify.set('Activation Status', 'not_activated');
+        amplitude.getInstance().identify(identify);
+        
+        amplitude.getInstance().logEvent('Signup Completed', {
+            signup_method: signupMethod,
+            account_type: accountType,
+            onboarding_version: '1.0',
+            time_to_signup_seconds: Math.floor((Date.now() - (localStorage.getItem('signup_start_time') || Date.now())) / 1000),
+            is_email_verified: false
+        });
+    }
+    
+    // Track Email Verified - User verified their email
+    function trackEmailVerified(verificationMethod) {
+        const identify = new amplitude.Identify();
+        identify.set('is_email_verified', true);
+        amplitude.getInstance().identify(identify);
+        
+        amplitude.getInstance().logEvent('Email Verified', {
+            verification_method: verificationMethod,
+            time_since_signup_seconds: Math.floor((Date.now() - (localStorage.getItem('signup_start_time') || Date.now())) / 1000)
+        });
+    }
+    
+    // Track Login Completed - User authenticated
+    function trackLoginCompleted(authMethod, isSso) {
+        const identify = new amplitude.Identify();
+        identify.set('last_login_time', new Date().toISOString());
+        amplitude.getInstance().identify(identify);
+        
+        amplitude.getInstance().logEvent('Login Completed', {
+            auth_method: authMethod,
+            is_sso: isSso || false,
+            time_since_last_login_seconds: localStorage.getItem('last_login_time') ? 
+                Math.floor((Date.now() - parseInt(localStorage.getItem('last_login_time'))) / 1000) : 0
+        });
+        
+        localStorage.setItem('last_login_time', Date.now());
+    }
+    
+    // Track Demo Request Started - User begins demo request flow
+    function trackDemoRequestStarted() {
+        amplitude.getInstance().logEvent('Demo Request Started', {
+            flow_name: 'landing-page-demo-request',
+            cta_location: 'landing-page-header',
+            request_type: 'guided-demo'
+        });
+    }
+    
+    // Track Demo Request Submitted
+    function trackDemoRequestSubmitted(requestType, useCase, companySizeBracket, requestedSeats) {
+        amplitude.getInstance().logEvent('Demo Request Submitted', {
+            request_type: requestType,
+            use_case: useCase,
+            company_size_bracket: companySizeBracket,
+            requested_seats: requestedSeats || 1
+        });
+    }
+    
+    // Track Onboarding Step Completed
+    function trackOnboardingStepCompleted(step, status, version, timeInStepSeconds) {
+        amplitude.getInstance().logEvent('Onboarding Step Completed', {
+            onboarding_step: step,
+            step_status: status,
+            onboarding_version: version || '1.0',
+            time_in_step_seconds: timeInStepSeconds,
+            time_since_signup_seconds: Math.floor((Date.now() - (localStorage.getItem('signup_start_time') || Date.now())) / 1000)
+        });
+    }
+    
+    // Track Onboarding Completed
+    function trackOnboardingCompleted(version, totalTimeSeconds, stepsCompletedCount) {
+        const identify = new amplitude.Identify();
+        identify.set('Onboarding Status', 'completed');
+        amplitude.getInstance().identify(identify);
+        
+        amplitude.getInstance().logEvent('Onboarding Completed', {
+            onboarding_version: version || '1.0',
+            time_to_onboard_seconds: totalTimeSeconds,
+            steps_completed_count: stepsCompletedCount
+        });
+    }
+    
+    // Track Activation Milestone Reached
+    function trackActivationMilestoneReached(milestoneName, version) {
+        const identify = new amplitude.Identify();
+        identify.set('Activation Status', 'activated');
+        amplitude.getInstance().identify(identify);
+        
+        amplitude.getInstance().logEvent('Activation Milestone Reached', {
+            milestone_name: milestoneName,
+            milestone_version: version || '1.0',
+            time_since_signup_seconds: Math.floor((Date.now() - (localStorage.getItem('signup_start_time') || Date.now())) / 1000)
+        });
+    }
+    
+    // Track App Session Started
+    function trackAppSessionStarted(isAuthenticated, entryPoint) {
+        amplitude.getInstance().logEvent('App Session Started', {
+            is_authenticated: isAuthenticated,
+            entry_point: entryPoint,
+            time_since_last_session_seconds: localStorage.getItem('last_session_end_time') ?
+                Math.floor((Date.now() - parseInt(localStorage.getItem('last_session_end_time'))) / 1000) : 0
+        });
+        
+        localStorage.setItem('current_session_start_time', Date.now());
+    }
+    
+    // Track Feature Used
+    function trackFeatureUsed(featureName, featureArea, action, isFirstTime, success) {
+        amplitude.getInstance().logEvent('Feature Used', {
+            feature_name: featureName,
+            feature_area: featureArea,
+            action: action,
+            is_first_time: isFirstTime || false,
+            success: success || true
+        });
+    }
+    
+    // Track Integration Connected
+    function trackIntegrationConnected(integrationName, integrationType, connectionMethod, success) {
+        const identify = new amplitude.Identify();
+        if (success) {
+            identify.append('Enabled Integrations', integrationName);
+        }
+        amplitude.getInstance().identify(identify);
+        
+        amplitude.getInstance().logEvent('Integration Connected', {
+            integration_name: integrationName,
+            integration_type: integrationType,
+            connection_method: connectionMethod,
+            success: success
+        });
+    }
+    
+    // Track Asset Created
+    function trackAssetCreated(assetType, assetId, templateId, isFirstAsset) {
+        amplitude.getInstance().logEvent('Asset Created', {
+            asset_type: assetType,
+            asset_id: assetId,
+            template_id: templateId || null,
+            is_first_asset: isFirstAsset || false
+        });
+    }
+    
+    // Track Asset Shared
+    function trackAssetShared(assetType, assetId, shareMethod, recipientType) {
+        amplitude.getInstance().logEvent('Asset Shared', {
+            asset_type: assetType,
+            asset_id: assetId,
+            share_method: shareMethod,
+            recipient_type: recipientType
+        });
+    }
+    
+    // Track Export Completed
+    function trackExportCompleted(exportType, exportFormat, assetType, assetId, rowsExportedCount) {
+        amplitude.getInstance().logEvent('Export Completed', {
+            export_type: exportType,
+            export_format: exportFormat,
+            asset_type: assetType,
+            asset_id: assetId,
+            rows_exported_count: rowsExportedCount || 0
+        });
+    }
+    
+    // Track Error Encountered
+    function trackErrorEncountered(errorCategory, errorMessage, errorContext, httpStatusCode, isRetryable) {
+        amplitude.getInstance().logEvent('Error Encountered', {
+            error_category: errorCategory,
+            error_message: errorMessage,
+            error_context: errorContext,
+            http_status_code: httpStatusCode || null,
+            is_retryable: isRetryable || false
+        });
+    }
+    
+    // ============================================================
+    // Set User Properties
+    // ============================================================
+    
+    function setUserProperties(userProps) {
+        const identify = new amplitude.Identify();
+        
+        if (userProps.account_type) identify.set('Account Type', userProps.account_type);
+        if (userProps.signup_method) identify.set('Signup Method', userProps.signup_method);
+        if (userProps.user_role) identify.set('User Role', userProps.user_role);
+        if (userProps.onboarding_status) identify.set('Onboarding Status', userProps.onboarding_status);
+        if (userProps.activation_status) identify.set('Activation Status', userProps.activation_status);
+        if (userProps.primary_use_case) identify.set('Primary Use Case', userProps.primary_use_case);
+        if (userProps.company_size_bracket) identify.set('Company Size Bracket', userProps.company_size_bracket);
+        if (userProps.plan_tier) identify.set('Plan Tier', userProps.plan_tier);
+        if (userProps.trial_status) identify.set('Trial Status', userProps.trial_status);
+        if (userProps.enabled_integrations) identify.set('Enabled Integrations', userProps.enabled_integrations);
+        
+        amplitude.getInstance().identify(identify);
+    }
+    
+    // ============================================================
+    // Landing Page Event Tracking
+    // ============================================================
     
     // Track page view
-    amplitude.getInstance().logEvent('Page Viewed', { page: 'landing' });
-    
-    // CTA 1: Sign Up
-    document.getElementById('signupBtn')?.addEventListener('click', () => {
-        amplitude.getInstance().logEvent('CTA Clicked', { button_name: 'Sign Up' });
-        alert('✅ Event "Sign Up" tracked — check Amplitude');
+    amplitude.getInstance().logEvent('Page Viewed', { 
+        page: 'landing',
+        referrer: document.referrer || 'direct'
     });
     
-    // CTA 2: Request Demo
+    // Mark first visit
+    if (!localStorage.getItem('first_visit_timestamp')) {
+        localStorage.setItem('first_visit_timestamp', Date.now());
+    }
+    
+    // CTA 1: Sign Up Button
+    document.getElementById('signupBtn')?.addEventListener('click', () => {
+        localStorage.setItem('signup_start_time', Date.now());
+        trackSignupStarted();
+        alert('✅ Event "Signup Started" tracked — sign up to complete tracking');
+    });
+    
+    // CTA 2: Request Demo Button
     document.getElementById('demoBtn')?.addEventListener('click', () => {
-        amplitude.getInstance().logEvent('CTA Clicked', { button_name: 'Request Demo' });
-        alert('✅ Event "Request Demo" tracked');
+        trackDemoRequestStarted();
+        alert('✅ Event "Demo Request Started" tracked — submit demo request form to continue tracking');
     });
 </script>
 </body>
